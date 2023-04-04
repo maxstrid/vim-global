@@ -44,6 +44,26 @@ impl<'a> XDisplay<'a> {
     pub fn get_default_root_window(&mut self) -> u64 {
         unsafe { xlib::XDefaultRootWindow(self.0) }
     }
+    pub fn grab_keyboard(&mut self) {
+        unsafe {
+            xlib::XGrabKeyboard(
+                self.0,
+                self.get_default_root_window(),
+                xlib::True,
+                xlib::GrabModeAsync,
+                xlib::GrabModeAsync,
+                xlib::CurrentTime,
+            );
+            xlib::XFlush(self.0);
+        }
+    }
+
+    pub fn ungrab_keyboard(&mut self) {
+        unsafe {
+            xlib::XUngrabKeyboard(self.0, xlib::CurrentTime);
+            xlib::XFlush(self.0);
+        }
+    }
 
     pub fn click_mouse(&mut self) -> Result<(), XError> {
         // Not working, unsure why

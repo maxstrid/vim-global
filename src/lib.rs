@@ -1,6 +1,6 @@
-use tracing::{info, trace};
 use std::fs::File;
 use std::io::Read;
+use tracing::{info, trace};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Keycode {

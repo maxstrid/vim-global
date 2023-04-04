@@ -4,7 +4,9 @@ use tracing_subscriber;
 mod xorg;
 
 fn main() {
-    tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
 
     let mut display = xorg::XDisplay::new().unwrap();
 
@@ -26,7 +28,9 @@ fn main() {
             mode.write();
         }
 
-        if keys.contains(&vim_global::Keycode::Escape) {
+        if keys.contains(&vim_global::Keycode::Escape)
+            && keys.contains(&vim_global::Keycode::Control)
+        {
             mode = vim_global::Mode::NORMAL;
             mode.write();
         }
@@ -51,11 +55,9 @@ fn main() {
                 display.move_pointer(0, 1);
             }
 
-            if keys.contains(&vim_global::Keycode::Space) {
-                display.click_mouse().unwrap();
-            }
+            display.grab_keyboard();
+        } else {
+            display.ungrab_keyboard();
         }
-
-        // println!("Keys: {keys:?}, Mode: {mode:?}")
     }
 }
