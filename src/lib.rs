@@ -1,3 +1,4 @@
+use tracing::{info, trace};
 use std::fs::File;
 use std::io::Read;
 
@@ -170,13 +171,16 @@ impl Mode {
             let mut content = String::new();
             file.read_to_string(&mut content).unwrap();
 
+            trace!("Read Mode {content} from {MODE_FILE_PATH}");
+
             match content.as_str() {
                 "INSERT" => return Mode::INSERT,
                 _ => return Mode::NORMAL,
             }
         } else if let Err(err) = mode_file {
             if err.kind() == std::io::ErrorKind::NotFound {
-                File::create("/tmp/vim_global_mode_current").unwrap();
+                File::create(MODE_FILE_PATH).unwrap();
+                info!("Created file {MODE_FILE_PATH}");
             }
         }
 
@@ -190,6 +194,8 @@ impl Mode {
             Mode::INSERT => content = "INSERT",
             Mode::NORMAL => (),
         };
+
+        info!("Wrote mode {content} to {MODE_FILE_PATH}");
 
         std::fs::write(MODE_FILE_PATH, content).unwrap();
     }

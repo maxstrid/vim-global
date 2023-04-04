@@ -2,6 +2,8 @@ use std::collections::HashSet;
 use vim_global::Keycode;
 use x11::xlib;
 
+use tracing::{debug, info, trace};
+
 mod error;
 use error::XError;
 
@@ -16,9 +18,11 @@ pub struct PointerInfo {
 pub struct XDisplay<'a>(&'a mut xlib::Display);
 
 impl<'a> XDisplay<'a> {
+    #[tracing::instrument]
     pub fn new() -> Result<XDisplay<'a>, XError> {
         unsafe {
             let display = xlib::XOpenDisplay(std::ptr::null());
+            info!("Created _XDisplay");
 
             if display.as_ref().is_none() {
                 return Err(XError::DisplayConnectionError);
@@ -58,7 +62,7 @@ impl<'a> XDisplay<'a> {
                 serial: 0,
                 send_event: xlib::True,
                 display: self.0,
-                window, 
+                window,
                 root: self.get_default_root_window(),
                 subwindow: window,
                 time: xlib::CurrentTime,
@@ -73,7 +77,13 @@ impl<'a> XDisplay<'a> {
         };
 
         unsafe {
-            let status = xlib::XSendEvent(self.0, self.get_default_root_window(), xlib::False, xlib::ButtonPressMask, &mut event);
+            let status = xlib::XSendEvent(
+                self.0,
+                self.get_default_root_window(),
+                xlib::False,
+                xlib::ButtonPressMask,
+                &mut event,
+            );
 
             if status == 0 {
                 return Err(XError::WireProtocolFailed);
@@ -100,6 +110,12 @@ impl<'a> XDisplay<'a> {
                 y_position,
             );
         }
+
+        trace!(
+            "Warped pointer from ({}, {}) to ({x_position}, {y_position})",
+            pointer_info.root_x,
+            pointer_info.root_y
+        );
     }
 
     pub fn query_keymap(&mut self) -> HashSet<Keycode> {

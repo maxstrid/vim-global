@@ -1,6 +1,11 @@
+use tracing::info;
+use tracing_subscriber;
+
 mod xorg;
 
 fn main() {
+    tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
+
     let mut display = xorg::XDisplay::new().unwrap();
 
     loop {
@@ -10,7 +15,7 @@ fn main() {
             && keys.contains(&vim_global::Keycode::Super)
             && keys.contains(&vim_global::Keycode::Q)
         {
-            println!("Ctrl + Super + Q found, quitting.");
+            info!("Ctrl + Super + Q found, quitting.");
             break;
         }
 
