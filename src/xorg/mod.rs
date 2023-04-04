@@ -67,8 +67,9 @@ impl<'a> XDisplay<'a> {
 
     pub fn click_mouse(&mut self) {
         unsafe {
-            x11::xtest::XTestFakeButtonEvent(self.0, xlib::Button1, xlib::True, 0);
-            x11::xtest::XTestFakeButtonEvent(self.0, xlib::Button1, xlib::False, 0);
+            x11::xtest::XTestFakeButtonEvent(self.0, xlib::Button1, xlib::True, 10);
+            x11::xtest::XTestFakeButtonEvent(self.0, xlib::Button1, xlib::False, 10);
+            std::thread::sleep(std::time::Duration::from_millis(50));
         }
     }
 
