@@ -1,9 +1,7 @@
 mod xorg;
 
 fn main() {
-    println!("Hello, world!");
-
-    let display = xorg::Display::new();
+    let mut display = xorg::XDisplay::new().unwrap();
 
     loop {
         let keys = display.query_keymap();
@@ -47,8 +45,12 @@ fn main() {
             if keys.contains(&vim_global::Keycode::K) {
                 display.move_pointer(0, 1);
             }
+
+            if keys.contains(&vim_global::Keycode::Space) {
+                display.click_mouse().unwrap();
+            }
         }
 
-        println!("Keys: {keys:?}, Mode: {mode:?}")
+        // println!("Keys: {keys:?}, Mode: {mode:?}")
     }
 }
