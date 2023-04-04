@@ -4,9 +4,17 @@ fn main() {
     println!("Hello, world!");
 
     let display = xorg::Display::new();
-    
+
     loop {
         let keys = display.query_keymap();
+
+        if keys.contains(&vim_global::Keycode::Control)
+            && keys.contains(&vim_global::Keycode::Super)
+            && keys.contains(&vim_global::Keycode::Q)
+        {
+            println!("Ctrl + Super + Q found, quitting.");
+            break;
+        }
 
         let mut mode = vim_global::Mode::get_current_mode();
 
@@ -19,7 +27,6 @@ fn main() {
             mode = vim_global::Mode::NORMAL;
             mode.write();
         }
-
 
         // Timeout
         std::thread::sleep(std::time::Duration::from_millis(1));

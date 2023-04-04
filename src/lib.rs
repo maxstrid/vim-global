@@ -179,7 +179,7 @@ impl Mode {
                 File::create("/tmp/vim_global_mode_current").unwrap();
             }
         }
-        
+
         Mode::NORMAL
     }
 
@@ -188,7 +188,7 @@ impl Mode {
 
         match self {
             Mode::INSERT => content = "INSERT",
-            Mode::NORMAL => ()
+            Mode::NORMAL => (),
         };
 
         std::fs::write(MODE_FILE_PATH, content).unwrap();

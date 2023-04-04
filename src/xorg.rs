@@ -1,6 +1,6 @@
-use x11::xlib;
-use vim_global::Keycode;
 use std::os::raw::c_char;
+use vim_global::Keycode;
+use x11::xlib;
 
 use std::collections::HashSet;
 
@@ -25,9 +25,9 @@ impl Display {
         let mut keys: HashSet<Keycode> = HashSet::new();
         unsafe {
             let keymap: *mut c_char = [0; 32].as_mut_ptr();
-            
+
             assert_ne!(xlib::XQueryKeymap(self.0, keymap), 0);
-            
+
             // Convert to kernel keycode
             for (ix, byte) in std::slice::from_raw_parts(keymap, 32).iter().enumerate() {
                 for bit in 0_u8..8_u8 {
@@ -57,30 +57,35 @@ impl Display {
             let mut child_return = 0;
             let mut mask_return = 0;
 
-            assert_ne!(xlib::XQueryPointer(
-                self.0,
-                root,
-                &mut root_return,
-                &mut child_return,
-                &mut root_x,
-                &mut root_y,
-                &mut win_x,
-                &mut win_y,
-                &mut mask_return,
-            ), 0);
+            assert_ne!(
+                xlib::XQueryPointer(
+                    self.0,
+                    root,
+                    &mut root_return,
+                    &mut child_return,
+                    &mut root_x,
+                    &mut root_y,
+                    &mut win_x,
+                    &mut win_y,
+                    &mut mask_return,
+                ),
+                0
+            );
 
-            assert_ne!(xlib::XWarpPointer(
-                self.0,
-                root,
-                root,
-                root_x,
-                root_y,
-                0,
-                0,
-                root_x + x_translation,
-                root_y + y_translation,
-            ), 0);
+            assert_ne!(
+                xlib::XWarpPointer(
+                    self.0,
+                    root,
+                    root,
+                    root_x,
+                    root_y,
+                    0,
+                    0,
+                    root_x + x_translation,
+                    root_y + y_translation,
+                ),
+                0
+            );
         }
     }
 }
-
