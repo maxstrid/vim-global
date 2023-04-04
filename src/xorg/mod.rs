@@ -65,52 +65,11 @@ impl<'a> XDisplay<'a> {
         }
     }
 
-    pub fn click_mouse(&mut self) -> Result<(), XError> {
-        // Not working, unsure why
-        let pointer_info = self.query_pointer();
-
-        let mut window = 0;
-        let mut revert_to_return = 0;
-
+    pub fn click_mouse(&mut self) {
         unsafe {
-            xlib::XGetInputFocus(self.0, &mut window, &mut revert_to_return);
+            x11::xtest::XTestFakeButtonEvent(self.0, xlib::Button1, xlib::True, 0);
+            x11::xtest::XTestFakeButtonEvent(self.0, xlib::Button1, xlib::False, 0);
         }
-
-        let mut event = xlib::XEvent {
-            button: xlib::XButtonEvent {
-                type_: xlib::ButtonPress,
-                serial: 0,
-                send_event: xlib::True,
-                display: self.0,
-                window,
-                root: self.get_default_root_window(),
-                subwindow: window,
-                time: xlib::CurrentTime,
-                x: pointer_info.win_x,
-                y: pointer_info.win_y,
-                x_root: pointer_info.root_x,
-                y_root: pointer_info.root_y,
-                state: xlib::Button1Mask,
-                button: xlib::Button1,
-                same_screen: xlib::True,
-            },
-        };
-
-        unsafe {
-            let status = xlib::XSendEvent(
-                self.0,
-                self.get_default_root_window(),
-                xlib::False,
-                xlib::ButtonPressMask,
-                &mut event,
-            );
-
-            if status == 0 {
-                return Err(XError::WireProtocolFailed);
-            }
-        }
-
-        Ok(())
     }
 
     pub fn warp_pointer(&mut self, x_position: i32, y_position: i32) {

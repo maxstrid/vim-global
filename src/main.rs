@@ -55,6 +55,10 @@ fn main() {
                 display.move_pointer(0, 1);
             }
 
+            if keys.contains(&vim_global::Keycode::Space) {
+                display.click_mouse();
+            }
+
             display.grab_keyboard();
         } else {
             display.ungrab_keyboard();
