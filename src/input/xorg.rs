@@ -1,11 +1,9 @@
 use std::collections::HashSet;
+use std::fmt;
 use vim_global::Keycode;
 use x11::xlib;
 
-use tracing::{debug, info, trace};
-
-mod error;
-use error::XError;
+use tracing::{info, trace};
 
 #[derive(Debug, Copy, Clone)]
 pub struct PointerInfo {
@@ -15,11 +13,17 @@ pub struct PointerInfo {
     pub win_y: i32,
 }
 
-pub struct XDisplay<'a>(&'a mut xlib::Display);
+#[derive(Debug, Copy, Clone)]
+pub struct WindowInfo {
+    pub width: i32,
+    pub height: i32,
+}
 
-impl<'a> XDisplay<'a> {
+pub struct XDisplay(*mut xlib::Display);
+
+impl XDisplay {
     #[tracing::instrument]
-    pub fn new() -> Result<XDisplay<'a>, XError> {
+    pub fn new() -> Result<XDisplay, XError> {
         unsafe {
             let display = xlib::XOpenDisplay(std::ptr::null());
             info!("Created _XDisplay");
@@ -28,23 +32,14 @@ impl<'a> XDisplay<'a> {
                 return Err(XError::DisplayConnectionError);
             }
 
-            Ok(XDisplay(&mut (*display)))
+            Ok(XDisplay(display))
         }
     }
 
-    pub fn move_pointer(&mut self, x_translation: i32, y_translation: i32) {
-        let pointer_info = self.query_pointer();
-
-        self.warp_pointer(
-            pointer_info.root_x + x_translation,
-            pointer_info.root_y + y_translation,
-        );
-    }
-
-    pub fn get_default_root_window(&mut self) -> u64 {
+    pub fn get_default_root_window(&self) -> u64 {
         unsafe { xlib::XDefaultRootWindow(self.0) }
     }
-    pub fn grab_keyboard(&mut self) {
+    pub fn grab_keyboard(&self) {
         unsafe {
             xlib::XGrabKeyboard(
                 self.0,
@@ -58,22 +53,34 @@ impl<'a> XDisplay<'a> {
         }
     }
 
-    pub fn ungrab_keyboard(&mut self) {
+    pub fn ungrab_keyboard(&self) {
         unsafe {
             xlib::XUngrabKeyboard(self.0, xlib::CurrentTime);
             xlib::XFlush(self.0);
         }
     }
 
-    pub fn click_mouse(&mut self) {
+    pub fn test_fake_button(&self, button: u32, is_press: bool, delay: u64) {
+        let mut press = xlib::True;
+        if !is_press {
+            press = xlib::False;
+        }
+
         unsafe {
-            x11::xtest::XTestFakeButtonEvent(self.0, xlib::Button1, xlib::True, 10);
-            x11::xtest::XTestFakeButtonEvent(self.0, xlib::Button1, xlib::False, 10);
-            std::thread::sleep(std::time::Duration::from_millis(50));
+            x11::xtest::XTestFakeButtonEvent(self.0, button, press, delay);
         }
     }
 
-    pub fn warp_pointer(&mut self, x_position: i32, y_position: i32) {
+    pub fn get_window_info(&self) -> WindowInfo {
+        unsafe {
+            let width = xlib::XDisplayWidth(self.0, 0);
+            let height = xlib::XDisplayHeight(self.0, 0);
+
+            WindowInfo { width, height }
+        }
+    }
+
+    pub fn warp_pointer(&self, x_position: i32, y_position: i32) {
         let root = self.get_default_root_window();
         let pointer_info = self.query_pointer();
 
@@ -98,7 +105,7 @@ impl<'a> XDisplay<'a> {
         );
     }
 
-    pub fn query_keymap(&mut self) -> HashSet<Keycode> {
+    pub fn query_keymap(&self) -> HashSet<Keycode> {
         let mut keys: HashSet<Keycode> = HashSet::new();
 
         unsafe {
@@ -124,7 +131,7 @@ impl<'a> XDisplay<'a> {
         keys
     }
 
-    pub fn query_pointer(&mut self) -> PointerInfo {
+    pub fn query_pointer(&self) -> PointerInfo {
         let mut root_x = 0;
         let mut root_y = 0;
         let mut win_x = 0;
@@ -156,3 +163,18 @@ impl<'a> XDisplay<'a> {
         }
     }
 }
+
+#[derive(Debug, Copy, Clone)]
+pub enum XError {
+    DisplayConnectionError,
+}
+
+impl fmt::Display for XError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            XError::DisplayConnectionError => write!(f, "Couldn't connect to XDisplay server"),
+        }
+    }
+}
+
+impl std::error::Error for XError {}

@@ -1,17 +1,17 @@
 use tracing::info;
 use tracing_subscriber;
 
-mod xorg;
+mod input;
 
 fn main() {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
-    let mut display = xorg::XDisplay::new().unwrap();
+    let mut input = input::Input::new().unwrap();
 
     loop {
-        let keys = display.query_keymap();
+        let keys = input.get_keys();
 
         if keys.contains(&vim_global::Keycode::Control)
             && keys.contains(&vim_global::Keycode::Super)
@@ -35,33 +35,38 @@ fn main() {
             mode.write();
         }
 
+        match mode {
+            vim_global::Mode::NORMAL => {
+                if keys.contains(&vim_global::Keycode::H) {
+                    input.mouse_x += -1;
+                }
+
+                if keys.contains(&vim_global::Keycode::L) {
+                    input.mouse_x += 1;
+                }
+
+                if keys.contains(&vim_global::Keycode::J) {
+                    input.mouse_y += -1;
+                }
+
+                if keys.contains(&vim_global::Keycode::K) {
+                    input.mouse_y += 1;
+                }
+
+                if keys.contains(&vim_global::Keycode::Space) {
+                    input.queue_action(input::InputAction::ClickMouse);
+                }
+
+                input.queue_action(input::InputAction::FreezeKeyboard);
+            }
+            vim_global::Mode::INSERT => {
+                input.queue_action(input::InputAction::UnfreezeKeyboard);
+            }
+        }
+
         // Timeout
         std::thread::sleep(std::time::Duration::from_millis(1));
 
-        if mode == vim_global::Mode::NORMAL {
-            if keys.contains(&vim_global::Keycode::H) {
-                display.move_pointer(-1, 0);
-            }
-
-            if keys.contains(&vim_global::Keycode::L) {
-                display.move_pointer(1, 0);
-            }
-
-            if keys.contains(&vim_global::Keycode::J) {
-                display.move_pointer(0, -1);
-            }
-
-            if keys.contains(&vim_global::Keycode::K) {
-                display.move_pointer(0, 1);
-            }
-
-            if keys.contains(&vim_global::Keycode::Space) {
-                display.click_mouse();
-            }
-
-            display.grab_keyboard();
-        } else {
-            display.ungrab_keyboard();
-        }
+        input.update();
     }
 }
