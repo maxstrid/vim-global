@@ -1,6 +1,7 @@
 mod xorg;
 use std::collections::HashSet;
 use x11::xlib;
+use vim_global::Keycode;
 use xorg::XDisplay;
 
 pub enum InputAction {

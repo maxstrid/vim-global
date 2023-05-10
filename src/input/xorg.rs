@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::fmt;
 use vim_global::Keycode;
 use x11::xlib;
+use num::FromPrimitive;
 
 use tracing::{info, trace};
 
@@ -122,7 +123,9 @@ impl XDisplay {
                         //x11 keycode uses kernel keycode with an offset of 8.
                         let x11_key = ix as u8 * 8 + bit;
                         let kernel_key = x11_key - 8;
-                        keys.insert(Keycode::from_kernel_code(kernel_key));
+
+                        let keycode: Keycode = FromPrimitive::from_u32(kernel_key as u32).unwrap_or(Keycode::Unknown);
+                        keys.insert(keycode);
                     }
                 }
             }
