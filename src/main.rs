@@ -9,52 +9,64 @@ fn main() {
         .init();
 
     let mut input = input::Input::new().unwrap();
+    let mut keys = input.get_keys();
 
     loop {
-        let keys = input.get_keys();
+        let last_keys = keys.clone();
+        keys = input.get_keys();
 
-        if keys.contains(&vim_global::Keycode::Control)
-            && keys.contains(&vim_global::Keycode::Super)
-            && keys.contains(&vim_global::Keycode::Q)
-        {
-            info!("Ctrl + Super + Q found, quitting.");
-            break;
+        if keys.is_empty() {
+            continue;
         }
 
         let mut mode = vim_global::Mode::get_current_mode();
 
-        if keys.contains(&vim_global::Keycode::I) {
-            mode = vim_global::Mode::INSERT;
-            mode.write();
-        }
+        if last_keys != keys {
+            if keys.contains(&vim_global::Keycode::Control)
+                && keys.contains(&vim_global::Keycode::Super)
+                && keys.contains(&vim_global::Keycode::Q)
+            {
+                info!("Ctrl + Super + Q found, quitting.");
+                break;
+            }
 
-        if keys.contains(&vim_global::Keycode::Escape)
-            && keys.contains(&vim_global::Keycode::Control)
-        {
-            mode = vim_global::Mode::NORMAL;
-            mode.write();
+            if keys.contains(&vim_global::Keycode::I) {
+                mode = vim_global::Mode::INSERT;
+                mode.write();
+            }
+
+            if keys.contains(&vim_global::Keycode::Escape)
+                && keys.contains(&vim_global::Keycode::Control)
+            {
+                mode = vim_global::Mode::NORMAL;
+                mode.write();
+            }
         }
 
         match mode {
             vim_global::Mode::NORMAL => {
                 if keys.contains(&vim_global::Keycode::H) {
-                    input.mouse_x += -1;
+                    input.mouse_x_offset += -1;
                 }
 
                 if keys.contains(&vim_global::Keycode::L) {
-                    input.mouse_x += 1;
+                    input.mouse_x_offset += 1;
                 }
 
                 if keys.contains(&vim_global::Keycode::J) {
-                    input.mouse_y += -1;
+                    input.mouse_y_offset += 1;
                 }
 
                 if keys.contains(&vim_global::Keycode::K) {
-                    input.mouse_y += 1;
+                    input.mouse_y_offset += -1;
                 }
 
                 if keys.contains(&vim_global::Keycode::Space) {
                     input.queue_action(input::InputAction::ClickMouse);
+                }
+
+                if keys.contains(&vim_global::Keycode::Shift) && keys.contains(&vim_global::Keycode::K) {
+                    input.queue_action(input::InputAction::KeyUp);
                 }
 
                 input.queue_action(input::InputAction::FreezeKeyboard);

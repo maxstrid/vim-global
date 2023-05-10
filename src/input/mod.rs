@@ -14,8 +14,8 @@ pub enum InputAction {
 
 pub struct Input {
     display: XDisplay,
-    pub mouse_x: i32,
-    pub mouse_y: i32,
+    pub mouse_x_offset: i32,
+    pub mouse_y_offset: i32,
     action_queue: Vec<InputAction>,
 }
 
@@ -24,13 +24,10 @@ impl Input {
         // TODO: Add native wayland support
         let display = XDisplay::new()?;
 
-        let mouse_x = display.query_pointer().root_x;
-        let mouse_y = display.query_pointer().root_y;
-
         Ok(Input {
             display,
-            mouse_x,
-            mouse_y,
+            mouse_x_offset: 0,
+            mouse_y_offset: 0,
             action_queue: vec![],
         })
     }
@@ -41,18 +38,24 @@ impl Input {
             self.action_queue.remove(0);
         }
 
+        let mut mouse_x = self.display.query_pointer().root_x + self.mouse_x_offset;
+        let mut mouse_y = self.display.query_pointer().root_y + self.mouse_y_offset;
+
         let window_info = self.display.get_window_info();
 
-        if self.mouse_x > window_info.width {
-            self.mouse_x = window_info.width;
-        } else if self.mouse_x < 0 {
-            self.mouse_x = 0;
-        } else if self.mouse_y > window_info.height {
-            self.mouse_y = window_info.height;
-        } else if self.mouse_y < 0 {
-            self.mouse_y = 0;
+        if mouse_x > window_info.width {
+            mouse_x = window_info.width;
+        } else if mouse_x < 0 {
+            mouse_x = 0;
+        } else if mouse_y > window_info.height {
+            mouse_y = window_info.height;
+        } else if mouse_y < 0 {
+            mouse_y = 0;
         }
-        self.display.warp_pointer(self.mouse_x, self.mouse_y);
+        self.display.warp_pointer(mouse_x, mouse_y);
+
+        self.mouse_x_offset = 0;
+        self.mouse_y_offset = 0;
     }
 
     pub fn get_keys(&self) -> HashSet<vim_global::Keycode> {
