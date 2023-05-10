@@ -65,10 +65,6 @@ fn main() {
                     input.queue_action(input::InputAction::ClickMouse);
                 }
 
-                if keys.contains(&vim_global::Keycode::Shift) && keys.contains(&vim_global::Keycode::K) {
-                    input.queue_action(input::InputAction::KeyUp);
-                }
-
                 input.queue_action(input::InputAction::FreezeKeyboard);
             }
             vim_global::Mode::INSERT => {
