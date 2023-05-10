@@ -9,6 +9,7 @@ fn main() {
         .init();
 
     let mut input = input::Input::new().unwrap();
+    let mut coefficient = 1;
     let mut keys = input.get_keys();
 
     loop {
@@ -45,20 +46,32 @@ fn main() {
 
         match mode {
             vim_global::Mode::NORMAL => {
+                if keys.contains(&vim_global::Keycode::Key1) {
+                    coefficient = 1;
+                }
+
+                if keys.contains(&vim_global::Keycode::Key2) {
+                    coefficient = 2;
+                }
+
+                if keys.contains(&vim_global::Keycode::Key3) {
+                    coefficient = 3;
+                }
+
                 if keys.contains(&vim_global::Keycode::H) {
-                    input.mouse_x_offset += -1;
+                    input.mouse_x_offset += -1 * coefficient;
                 }
 
                 if keys.contains(&vim_global::Keycode::L) {
-                    input.mouse_x_offset += 1;
+                    input.mouse_x_offset += 1 * coefficient;
                 }
 
                 if keys.contains(&vim_global::Keycode::J) {
-                    input.mouse_y_offset += 1;
+                    input.mouse_y_offset += 1 * coefficient;
                 }
 
                 if keys.contains(&vim_global::Keycode::K) {
-                    input.mouse_y_offset += -1;
+                    input.mouse_y_offset += -1 * coefficient;
                 }
 
                 if keys.contains(&vim_global::Keycode::Space) {
